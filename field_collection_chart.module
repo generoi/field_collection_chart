@@ -1,0 +1,336 @@
+<?php
+
+/**
+ * @file field_collection_chart.module
+ * TODO: Enter file description here.
+ */
+
+/**
+ * Implements hook_library().
+ */
+function field_collection_chart_library() {
+  $module_path = drupal_get_path('module', 'field_collection_chart');
+  $library_path = libraries_get_path('graphael');
+  $items['raphael'] = array(
+    'title' => t('raphael'),
+    'version' => '2.0.2',
+    'js' => array(
+      $library_path . '/raphael-min.js' => array('group' => JS_LIBRARY),
+    ),
+  );
+  $items['g.raphael'] = array(
+    'title' => t('g.raphael'),
+    'version' => '0.5.1',
+    'js' => array(
+      $library_path . '/min/g.raphael-min.js' => array('group' => JS_LIBRARY),
+    ),
+    'dependencies' => array(
+      array('field_collection_chart', 'raphael'),
+    ),
+  );
+  $items['g.pie'] = array(
+    'title' => t('g.pie'),
+    'version' => '0.5.1',
+    'js' => array(
+      $library_path . '/min/g.pie-min.js' => array('group' => JS_LIBRARY),
+    ),
+    'dependencies' => array(
+      array('field_collection_chart', 'g.raphael'),
+    ),
+  );
+  $items['chart'] = array(
+    'title' => t('Piechart'),
+    'version' => '1.0',
+    'js' => array(
+      $module_path . '/js/field_collection_chart.js' => array(),
+    ),
+    'css' => array(
+      $module_path . '/field_collection_chart.css',
+    ),
+  );
+  $items['piechart'] = array(
+    'title' => t('Piechart'),
+    'version' => '1.0',
+    'js' => array(
+      $module_path . '/js/piechart.js' => array(),
+    ),
+    'dependencies' => array(
+      array('field_collection_chart', 'chart'),
+      array('field_collection_chart', 'g.pie'),
+    ),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function field_collection_chart_theme($existing, $type, $theme, $path) {
+  $base = array(
+    'file' => 'theme.inc',
+  );
+  return array(
+    'field_collection_chart_pie' => $base + array(
+      'variables' => array(
+        'id' => NULL,
+        'percentage' => TRUE,
+        'remainder_label' => '',
+        'remainder_description' => '',
+        'append_part_size' => FALSE,
+        'options' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function field_collection_chart_field_formatter_info() {
+  return array(
+    'field_collection_pie_chart' => array(
+      'label' => t('Pie chart'),
+      'field types' => array('field_collection'),
+      'settings' => array(
+        'empty' => TRUE,
+        'percentage' => TRUE,
+        'remainder_label' => 'Other',
+        'remainder_description' => '',
+        'descriptions_display' => '',
+        'descriptions_selector' => '',
+        'append_part_size' => '',
+        'options' => array(
+          'cx' => 110,
+          'cy' => 110,
+          'radius' => 100,
+          'scale' => 1.1,
+          'legendmark_scale' => 2,
+          'colors' => '',
+          'legendpos' => 'east',
+        ),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function field_collection_chart_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+
+  switch ($display['type']) {
+    case 'field_collection_pie_chart':
+      $field_data = array();
+      // Get the names of the field which are of a valid field type, also store
+      // their description and label in case it's used.
+      foreach (field_info_instances('field_collection_item',
+        $field['field_name']) as $field_name => $field_collection_item) {
+        $field_info = field_info_field($field_name);
+        if (in_array($field_info['type'], array('number_integer'))) {
+          $field_name = $field_info['field_name'];
+          $field_data[$field_name] = array(
+            'description' => $field_collection_item['description'],
+            'label' => $field_collection_item['label'],
+          );
+        }
+      }
+      foreach ($items as $delta => $item) {
+        $values = array();
+        $legends = array();
+        $field_collection = field_collection_field_get_entity($item);
+        if (empty($field_collection)) {
+          continue;
+        }
+        $field_collection_name = $field_collection->field_name;
+        foreach ($field_data as $field_name => $data) {
+          $items = field_get_items('field_collection_item', $field_collection, $field_name);
+          $value = 0;
+          foreach ($items as $item) {
+            if (is_numeric($item['value'])) {
+              $value += intval($item['value']);
+            }
+          }
+          $values[] = $value;
+          $legends[] = i18n_string('field_collection_chart:' . $field_name . ':label', $data['label']);
+          $descriptions[] = $data['description'];
+        }
+
+        $options = $settings['options'];
+        $options['values'] = $values;
+        $options['legend'] = $legends;
+        $options['descriptions'] = $descriptions;
+        $options['descriptions_display'] = $settings['descriptions_display'];
+        $options['descriptions_selector'] = $settings['descriptions_selector'];
+        $element[$delta] = array(
+          '#theme' => 'field_collection_chart_pie',
+          '#id' => 'field_collection_chart_pie-' . $field_collection->item_id,
+          '#percentage' => $settings['percentage'],
+          '#append_part_size' => $settings['append_part_size'],
+          '#remainder_label' => token_replace(i18n_string('field_collection_chart:' . $field_collection_name . ':remainder_label', $settings['remainder_label']), array($entity_type => $entity)),
+          '#remainder_description' => token_replace(i18n_string('field_collection_chart:' . $field_collection_name . ':remainder_description', $settings['remainder_description']), array($entity_type => $entity)),
+          '#options' => $options,
+        );
+      }
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function field_collection_chart_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $element = array();
+  switch ($display['type']) {
+    case 'field_collection_pie_chart':
+      $element['empty'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Hide empty columns'),
+        '#description' => t('If checked, hide empty Field Collection table columns.'),
+        '#default_value' => $settings['empty'],
+      );
+      $element['descriptions_display'] = array(
+        '#type' => 'select',
+        '#title' => t('Display descriptions'),
+        '#options' => array(
+          '' => t('No'),
+          'hover' => t('On mouseover'),
+          'click' => t('On click'),
+        ),
+        '#default_value' => $settings['descriptions_display'],
+      );
+      $element['descriptions_selector'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Descriptions selector'),
+        '#description' => t('A jQuery selector where the descriptions will be appended.'),
+        '#default_value' => $settings['descriptions_selector'],
+      );
+      $element['append_part_size'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Append part size to label'),
+        '#default_value' => $settings['append_part_size'],
+      );
+      $element['percentage'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Use percentage'),
+        '#description' => t('If checked, the field values are counted as a percentage instead of a count.'),
+        '#default_value' => $settings['percentage'],
+      );
+      $element['remainder_label'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Remainder label'),
+        '#default_value' => $settings['remainder_label'],
+        '#states' => array(
+          'visible' => array(
+            ':input[name="fields[field_ingredients][settings_edit_form][settings][percentage]"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+      $element['remainder_description'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Remainder description'),
+        '#default_value' => $settings['remainder_description'],
+        '#states' => array(
+          'visible' => array(
+            ':input[name="fields[field_ingredients][settings_edit_form][settings][percentage]"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+      if (module_exists('token')) {
+        $element['remainder_label']['#description'] = t('This field supports tokens.');
+        $element['remainder_description']['#description'] = t('This field supports tokens.');
+        $element['token_tree'] = array(
+          '#theme' => 'token_tree',
+          '#token_types' => array('node'),
+          '#dialog' => TRUE,
+        );
+      }
+      $element['options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Raphael Options'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $element['options']['cx'] = array(
+        '#type' => 'textfield',
+        '#title' => t('X coordinate'),
+        '#default_value' => $settings['options']['cx'],
+      );
+      $element['options']['cy'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Y coordinate'),
+        '#default_value' => $settings['options']['cy'],
+      );
+      $element['options']['radius'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Radius'),
+        '#default_value' => $settings['options']['radius'],
+      );
+      $element['options']['scale'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Scale multiplier'),
+        '#default_value' => $settings['options']['scale'],
+      );
+      $element['options']['legendmark_scale'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Legend marker scale multiplier'),
+        '#default_value' => $settings['options']['legendmark_scale'],
+      );
+      $element['options']['legendpos'] = array(
+        '#type' => 'select',
+        '#title' => t('Legend position'),
+        '#options' => array(
+          'east' => t('Right side'),
+          'west' => t('Left side'),
+          'north' => t('Above'),
+          'south' => t('Below')
+        ),
+        '#default_value' => $settings['options']['legendpos'],
+      );
+      $element['options']['colors'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Colors'),
+        '#description' => t('Colors to use when plotting the chart, separated by spaces.'),
+        '#default_value' => $settings['options']['colors'],
+      );
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function field_collection_chart_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = field_collection_field_formatter_settings_summary($field, $instance, $view_mode);
+  switch ($display['type']) {
+    case 'field_collection_pie_chart':
+      $display = array(
+        '' => t('No'),
+        'hover' => t('On mouseover'),
+        'click' => t('On click'),
+      );
+      $legendpos = array(
+        'east' => t('Right side'),
+        'west' => t('Left side'),
+        'north' => t('Above'),
+        'south' => t('Below')
+      );
+      $summary .= '<br /><br />' . !empty($settings['empty']) ? t('Empty columns: Hidden') : t('Empty columns: Shown');
+      $summary .= '<br />' . !empty($settings['percentage']) ? t('Percentage: Yes') : t('Percentage: No');
+      $summary .= '<br />' . t('Display descriptions: %display', array('%display' => $display[$settings['descriptions_display']]));
+      $summary .= '<br />' . t('Description selector: %selector', array('%selector' => $settings['descriptions_selector']));
+      $summary .= '<br />' . t('Remainder label: %label', array('%label' => $settings['remainder_label']));
+      break;
+  }
+  return $summary;
+}
