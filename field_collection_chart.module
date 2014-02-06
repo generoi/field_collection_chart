@@ -163,13 +163,15 @@ function field_collection_chart_field_formatter_view($entity_type, $entity, $fie
         $options['descriptions'] = $descriptions;
         $options['descriptions_display'] = $settings['descriptions_display'];
         $options['descriptions_selector'] = $settings['descriptions_selector'];
+        $remainder_label = i18n_string('field_collection_chart:' . $field_collection_name . ':remainder_label', $settings['remainder_label']);
+        $remainder_description = i18n_string('field_collection_chart:' . $field_collection_name . ':remainder_description', $settings['remainder_description']);
         $element[$delta] = array(
           '#theme' => 'field_collection_chart_pie',
           '#id' => 'field_collection_chart_pie-' . $field_collection->item_id,
           '#percentage' => $settings['percentage'],
           '#append_part_size' => $settings['append_part_size'],
-          '#remainder_label' => token_replace(i18n_string('field_collection_chart:' . $field_collection_name . ':remainder_label', $settings['remainder_label']), array($entity_type => $entity)),
-          '#remainder_description' => token_replace(i18n_string('field_collection_chart:' . $field_collection_name . ':remainder_description', $settings['remainder_description']), array($entity_type => $entity)),
+          '#remainder_label' => token_replace($remainder_label, array($entity_type => $entity)),
+          '#remainder_description' => token_replace($remainder_description, array($entity_type => $entity)),
           '#options' => $options,
         );
       }
