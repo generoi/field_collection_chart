@@ -32,6 +32,12 @@
     delete options.descriptions_display;
     delete options.descriptions_selector;
 
+    // graphael bugs if there's a sector spanning 100%.
+    // @see http://goo.gl/pghJCQ
+    for(var i = 0, l = this.values.length; i < l; i++) {
+      if (this.values[i] === 100) this.values.push(0.001);
+    }
+
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
     // our custom mixins requires these.
     pie.values = this.values;
