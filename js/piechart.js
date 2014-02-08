@@ -32,12 +32,31 @@
     delete options.descriptions_display;
     delete options.descriptions_selector;
 
-    // graphael bugs if there's a sector spanning 100%.
-    // @see http://goo.gl/pghJCQ
+    var referenceMap = [];
     for(var i = 0, l = this.values.length; i < l; i++) {
+      // graphael bugs if there's a sector spanning 100%.
+      // @see http://goo.gl/pghJCQ
       if (this.values[i] === 100) this.values.push(0.001);
+      // Bundle the value and the description together so we dont loose their
+      // connection.
+      referenceMap.push({
+        value: this.values[i],
+        description: this.descriptions[i]
+      });
+    }
+    // g.pie sorts values numerically which makes it impossible to find a
+    // description without duplicating the exact sorting ourselves.
+    referenceMap.sort(function(a, b) {
+      return b.value - a.value;
+    });
+
+    // Set the descriptions in the same order as the g.pie sorted
+    // values/legends.
+    for (i = 0, l = referenceMap.length; i < l; i++) {
+      this.descriptions[i] = referenceMap[i].description;
     }
 
+    // Create the piechart
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
     // our custom mixins requires these.
     pie.values = this.values;
@@ -55,8 +74,12 @@
     pie.hoverLabel(mouseover, mouseout);
 
     var that = this
+      // Functions to toggle descriptions
       , fin = curryish(this.showDescription, this, [descriptions_selector])
       , fout = curryish(this.hideDescription, this, [descriptions_selector]);
+
+    // Display the description of the largest value by default.
+    this.showDescription(null, this.descriptions[0], descriptions_selector);
 
     // Display descriptions on either click or hover
     switch (descriptions_display) {
@@ -109,6 +132,7 @@
     // Keep the last description by default.
   };
 
+  // scale sector and landmark icon on mouseover
   Piechart.prototype.mouseover = function(ctx, scale, legendmark_size) {
     ctx.sector.stop();
     ctx.sector.transform('s' + [scale, scale, this.cx, this.cy].join(' '));
@@ -118,6 +142,7 @@
     }
   };
 
+  // Restore original sector and landmark size on mouseout.
   Piechart.prototype.mouseout = function(ctx) {
     ctx.sector.animate({ transform: 's1 1 ' + ctx.cx + ' ' + ctx.cy  }, 100, "linear");
     if (ctx.label) {
@@ -126,6 +151,8 @@
     }
   };
 
+  // Same as g.pies own each() except that it trackes the index so it can be
+  // used to find eg. descriptions
   var eachIndex = function (f) {
     var that = this;
     for (var i = 0; i < this.values.length; i++) {
