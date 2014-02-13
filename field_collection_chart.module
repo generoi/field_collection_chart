@@ -108,6 +108,7 @@ function field_collection_chart_field_formatter_info() {
           'colors' => '',
           'legendpos' => 'east',
         ),
+        'view_mode' => 'full',
       ),
     ),
   );
