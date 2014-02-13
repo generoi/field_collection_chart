@@ -18,7 +18,14 @@
       , legendmark_scale = +options.legendmark_scale || 1
       , legendmark_hover_size = this.legendmark_default_size * legendmark_scale
       , descriptions_display = options.descriptions_display
-      , descriptions_selector = options.descriptions_selector;
+      , descriptions_selector = options.descriptions_selector
+      // Approximation on when west/east legends do not fit anymore.
+      , maxWidth = this.radius * 7;
+
+    if (window.matchMedia && window.matchMedia('screen and (max-width: ' + maxWidth + 'px)').matches) {
+      if (options.legendpos === 'east') options.legendpos = 'south';
+      else if (options.legendpos === 'west') options.legendpos = 'north';
+    }
 
     // Only keep piecharts own options.
     delete options.cx;
