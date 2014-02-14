@@ -126,8 +126,7 @@ function field_collection_chart_field_formatter_view($entity_type, $entity, $fie
       $field_data = array();
       // Get the names of the field which are of a valid field type, also store
       // their description and label in case it's used.
-      foreach (field_info_instances('field_collection_item',
-        $field['field_name']) as $field_name => $field_collection_item) {
+      foreach (field_info_instances('field_collection_item', $field['field_name']) as $field_name => $field_collection_item) {
         $field_info = field_info_field($field_name);
         if (in_array($field_info['type'], array('number_integer'))) {
           $field_name = $field_info['field_name'];
@@ -148,9 +147,11 @@ function field_collection_chart_field_formatter_view($entity_type, $entity, $fie
         foreach ($field_data as $field_name => $data) {
           $items = field_get_items('field_collection_item', $field_collection, $field_name);
           $value = 0;
-          foreach ($items as $item) {
-            if (is_numeric($item['value'])) {
-              $value += intval($item['value']);
+          if (!empty($items)) {
+            foreach ($items as $item) {
+              if (is_numeric($item['value'])) {
+                $value += intval($item['value']);
+              }
             }
           }
           $values[] = $value;
