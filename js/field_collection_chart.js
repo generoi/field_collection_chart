@@ -5,6 +5,8 @@
       if (settings.charts) {
         for (var chart in settings.charts) if (settings.charts.hasOwnProperty(chart)) {
           var options = settings.charts[chart];
+          // Only initialize a chart once.
+          if (!options.type) continue;
           Drupal.fieldCollectionChart[options.type](chart, options);
         }
       }
