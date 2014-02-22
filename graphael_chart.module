@@ -1,0 +1,113 @@
+<?php
+
+/**
+ * @file graphael_chart.module
+ * TODO: Enter file description here.
+ */
+
+/**
+ * Implements hook_library().
+ */
+function graphael_chart_library() {
+  $module_path = drupal_get_path('module', 'graphael_chart');
+  $library_path = libraries_get_path('graphael');
+  $items['raphael'] = array(
+    'title' => t('raphael'),
+    'version' => '2.0.2',
+    'js' => array(
+      $library_path . '/raphael-min.js' => array('group' => JS_LIBRARY),
+    ),
+  );
+  $items['g.raphael'] = array(
+    'title' => t('g.raphael'),
+    'version' => '0.5.1',
+    'js' => array(
+      $library_path . '/min/g.raphael-min.js' => array('group' => JS_LIBRARY),
+    ),
+    'dependencies' => array(
+      array('graphael_chart', 'raphael'),
+    ),
+  );
+  $items['g.pie'] = array(
+    'title' => t('g.pie'),
+    'version' => '0.5.1',
+    'js' => array(
+      // Use our own custom version which doesnt order.
+      $module_path . '/js/g.pie.js' => array('group' => JS_LIBRARY),
+    ),
+    'dependencies' => array(
+      array('graphael_chart', 'g.raphael'),
+    ),
+  );
+  $items['chart'] = array(
+    'title' => t('Piechart'),
+    'version' => '1.0',
+    'js' => array(
+      $module_path . '/js/graphael_chart.js' => array(),
+    ),
+    'css' => array(
+      $module_path . '/graphael_chart.css',
+    ),
+  );
+  $items['piechart'] = array(
+    'title' => t('Piechart'),
+    'version' => '1.0',
+    'js' => array(
+      $module_path . '/js/piechart.js' => array(),
+    ),
+    'dependencies' => array(
+      array('graphael_chart', 'chart'),
+      array('graphael_chart', 'g.pie'),
+    ),
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function graphael_chart_theme($existing, $type, $theme, $path) {
+  $base = array(
+    'file' => 'theme.inc',
+  );
+  return array(
+    'graphael_chart_piechart' => $base + array(
+      'variables' => array(
+        'id' => NULL,
+        'percentage' => TRUE,
+        'append_part_size' => FALSE,
+        'minimum_part_size' => 0,
+        'options' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Get a list of acceptable value data fields usable in a select list.
+ */
+function graphael_chart_get_value_fields($entity_type, $bundle) {
+  $field_instances = field_info_instances($entity_type, $bundle);
+  $allowed_fields = array();
+  foreach ($field_instances as $field_name => $field_instance) {
+    $field_info = field_info_field($field_name);
+    if (in_array($field_info['type'], array('textfield', 'number_float', 'number_integer', 'number_decimal'))) {
+      $allowed_fields[$field_name] = $field_instance['label'];
+    }
+  }
+  return $allowed_fields;
+}
+/**
+ * Get a list of acceptable label data fields usable in a select list.
+ */
+function graphael_chart_get_label_fields($entity_type, $bundle) {
+  $field_instances = field_info_instances($entity_type, $bundle);
+  $allowed_fields = array();
+  foreach ($field_instances as $field_name => $field_instance) {
+    $field_info = field_info_field($field_name);
+    if (in_array($field_info['type'], array('texfield', 'taxonomy_term_reference'))) {
+      $allowed_fields[$field_name] = $field_instance['label'];
+    }
+  }
+  return $allowed_fields;
+}

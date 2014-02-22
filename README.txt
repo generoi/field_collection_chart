@@ -1,18 +1,20 @@
-Field Collection Chart
-======================
+Graphael Chart
+==============
 
 In early development, basically just use with our current requirements.
 
-Output a field collection as a chart using g.raphael.
+Renders fields as graphael charts.
+
+Supports the following fields types:
+- Multifield
 
 Supports the following charts:
 - Piechart
 
 Configuration
 -------------
-1. Add a field collection item and set the display to Piechart.
+1. Add a multifield and set the display to Graphael Chart.
 2. Create the fields which should be data rows in the chart.
-   NOTE! The fields have to be number_integer field types.
-3. If you want to display descriptions you can add the description in the help
-   description of the field widget (ugly I know).
-4. Configure the formatter.
+3. Select the field and label fields in the field formatter settings (If you're
+  using taxonomy terms the terms full entity view will be used as the
+  description).

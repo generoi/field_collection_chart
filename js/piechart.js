@@ -1,8 +1,8 @@
 /*jshint newcap:false, loopfunc:true, expr:true */
 (function($) {
-  Drupal.fieldCollectionChart = Drupal.fieldCollectionChart || {};
+  Drupal.graphaelChart = Drupal.graphaelChart || {};
 
-  Drupal.fieldCollectionChart.piechart = function(el, options) {
+  Drupal.graphaelChart.piechart = function(el, options) {
     return new Piechart(el, options);
   };
 
@@ -26,7 +26,6 @@
       if (options.legendpos === 'east') options.legendpos = 'south';
       else if (options.legendpos === 'west') options.legendpos = 'north';
     }
-
     // Only keep piecharts own options.
     delete options.cx;
     delete options.cy;
@@ -41,6 +40,8 @@
 
     var referenceMap = [];
     for(var i = 0, l = this.values.length; i < l; i++) {
+      // @TODO for some reason floats are preventing the chart from rendering.
+      this.values[i] = ~this.values[i];
       // graphael bugs if there's a sector spanning 100%.
       // @see http://goo.gl/pghJCQ
       if (this.values[i] === 100) this.values.push(0.001);
@@ -53,9 +54,11 @@
     }
     // g.pie sorts values numerically which makes it impossible to find a
     // description without duplicating the exact sorting ourselves.
-    referenceMap.sort(function(a, b) {
-      return b.value - a.value;
-    });
+    // We provide our custom build which doesnt sort but in case it's included
+    // than the following snippet is needed.
+    // referenceMap.sort(function(a, b) {
+    //   return a.value - b.value;
+    // });
 
     // Set the descriptions in the same order as the g.pie sorted
     // values/legends.
@@ -64,6 +67,7 @@
     }
 
     // Create the piechart
+    console.log(this);
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
     // our custom mixins requires these.
     pie.values = this.values;
@@ -237,5 +241,5 @@
   };
 
   // Expose the piechart so others can override it.
-  Drupal.fieldCollectionChart.Piechart = Piechart;
+  Drupal.graphaelChart.Piechart = Piechart;
 }(jQuery));

@@ -1,16 +1,16 @@
 (function($) {
-  Drupal.behaviors.fieldCollectionChart = {
+  Drupal.behaviors.graphaelChart = {
     attach: function(context) {
-      var settings = Drupal.settings.fieldCollectionChart || {};
+      var settings = Drupal.settings.graphaelChart || {};
       if (settings.charts) {
         for (var chart in settings.charts) if (settings.charts.hasOwnProperty(chart)) {
           var options = settings.charts[chart];
           // Only initialize a chart once.
           if (!options.type) continue;
-          Drupal.fieldCollectionChart[options.type](chart, options);
+          Drupal.graphaelChart[options.type](chart, options);
         }
       }
     }
   };
-  Drupal.fieldCollectionChart = Drupal.fieldCollectionChart || {};
+  Drupal.graphaelChart = Drupal.graphaelChart || {};
 }(jQuery));

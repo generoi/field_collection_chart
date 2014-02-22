@@ -1,0 +1,5 @@
+name = Graphael chart multifield formatter
+description = Display a multifield as a graphael chart
+package = custom
+dependencies[] = multifield
+core = 7.x

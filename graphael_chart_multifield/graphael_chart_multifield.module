@@ -1,0 +1,263 @@
+<?php
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function graphael_chart_multifield_field_formatter_info() {
+  $info = array();
+  $multifields = multifield_load_all();
+  if (!empty($multifields)) {
+    $info['multifield_graphael_chart'] = array(
+      'label' => t('Graphael chart'),
+      'field types' => array_keys($multifields),
+      'settings' => array(
+        // @TODO offer chart type.
+        'percentage' => TRUE,
+        'descriptions_display' => '',
+        'descriptions_selector' => '',
+        'append_part_size' => '',
+        'minimum_part_size' => 0,
+        'fields' => array(
+          'value' => '',
+          'label' => '',
+        ),
+        'options' => array(
+          'cx' => 110,
+          'cy' => 110,
+          'radius' => 100,
+          'scale' => 1.1,
+          'legendmark_scale' => 2,
+          'colors' => '',
+          'legendpos' => 'east',
+        ),
+        'view_mode' => 'default',
+      ),
+    );
+  }
+  return $info;
+}
+
+/**
+ * Implements hook_field_prepare_view().
+ */
+function graphael_chart_multifield_field_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items, $display = NULL) {
+  return multifield_field_prepare_view($entity_type, $entities, $field, $instances, $langcode, $items, $display);
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function graphael_chart_multifield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+  $descriptions_display  = $settings['descriptions_display'];
+  $descriptions_selector  = $settings['descriptions_selector'];
+  $value_field_name = $settings['fields']['value'];
+  $label_field_name = $settings['fields']['label'];
+  $label_field_info = field_info_field($label_field_name);
+
+  $values = $legends = $descriptions = array();
+
+  switch ($display['type']) {
+    case 'multifield_graphael_chart':
+      $field_data = array();
+      foreach ($items as $delta => $item) {
+        $value_field = field_get_items('multifield', $item['#pseudo_entity'], $value_field_name, $langcode);
+        $label_field = field_get_items('multifield', $item['#pseudo_entity'], $label_field_name, $langcode);
+        if (empty($label_field)) {
+          continue;
+        }
+        // @TODO we dont want to use field_view_field as we need the raw value,
+        // however this is sort of dirty and can break depending on field type.
+        $value = !empty($value_field) ? $value_field[0]['value'] : NULL;
+        switch ($label_field_info['type']) {
+          case 'taxonomy_term_reference':
+            $term = $label_field[0]['taxonomy_term'];
+            if (module_exists('i18n_taxonomy')) {
+              $term = i18n_taxonomy_localize_terms($term);
+            }
+            $label = $term->name; // @TODO i18n
+            $description = taxonomy_term_view($term, 'full', $langcode); // @TODO view mode configurable
+            $description = render($description);
+            break;
+          default:
+            // @TODO only taxonomy terms supported for now.
+            $label = field_view_field('multifield', $item['#pseudo_entity'], $label_field_name, $langcode);
+            $label = render($label[0]);
+            $description = '';
+        }
+
+        $values[] = $value;
+        $legends[] = $label;
+        $descriptions[] = $description;
+      }
+
+      $options = $settings['options'] + array(
+        'values' => $values,
+        'legend' => $legends,
+        'descriptions' => $descriptions,
+        'descriptions_display' => $descriptions_display,
+        'descriptions_selector' => $descriptions_selector,
+      );
+      $element[0] = array(
+        '#theme' => 'graphael_chart_piechart',
+        '#id' => 'graphael_chart_multifield_piechart-' . $instance['id'],
+        '#percentage' => $settings['percentage'],
+        '#append_part_size' => $settings['append_part_size'],
+        '#minimum_part_size' => $settings['minimum_part_size'],
+        '#options' => $options,
+      );
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function graphael_chart_multifield_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $element = multifield_field_formatter_settings_form($field, $instance, $view_mode);
+  switch ($display['type']) {
+    case 'multifield_graphael_chart':
+      $element['fields'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Field options'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+      $element['fields']['value'] = array(
+        '#type' => 'select',
+        '#title' => t('Value field'),
+        '#options' => graphael_chart_get_value_fields('multifield', $field['type']),
+        '#default_value' => $settings['fields']['value'],
+      );
+      $element['fields']['label'] = array(
+        '#type' => 'select',
+        '#title' => t('Label field'),
+        '#options' => graphael_chart_get_label_fields('multifield', $field['type']),
+        '#default_value' => $settings['fields']['label'],
+      );
+
+      $element['descriptions_display'] = array(
+        '#type' => 'select',
+        '#title' => t('Display descriptions'),
+        '#description' => t('Currently only supports taxonomy term label fields and the terms description is used.'),
+        '#options' => array(
+          '' => t('No'),
+          'hover' => t('On mouseover'),
+          'click' => t('On click'),
+        ),
+        '#default_value' => $settings['descriptions_display'],
+      );
+      $element['descriptions_selector'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Descriptions selector'),
+        '#description' => t('A jQuery selector where the descriptions will be appended.'),
+        '#default_value' => $settings['descriptions_selector'],
+      );
+      $element['append_part_size'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Append part size to label'),
+        '#default_value' => $settings['append_part_size'],
+      );
+      $element['minimum_part_size'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Minimum part size'),
+        '#description' => t('If part size is appended to the label, you can set a minimum size for the label to be appended.'),
+        '#default_value' => $settings['percentage'],
+        '#states' => array(
+          'visible' => array(
+            ':input[name$="[settings_edit_form][settings][append_part_size]"]' => array('checked' => TRUE),
+          ),
+        ),
+      );
+      $element['percentage'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Use percentage'),
+        '#description' => t('If checked, the field values are counted as a percentage instead of a count.'),
+        '#default_value' => $settings['percentage'],
+      );
+      $element['options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Raphael Options'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $element['options']['cx'] = array(
+        '#type' => 'textfield',
+        '#title' => t('X coordinate'),
+        '#default_value' => $settings['options']['cx'],
+      );
+      $element['options']['cy'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Y coordinate'),
+        '#default_value' => $settings['options']['cy'],
+      );
+      $element['options']['radius'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Radius'),
+        '#default_value' => $settings['options']['radius'],
+      );
+      $element['options']['scale'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Scale multiplier'),
+        '#default_value' => $settings['options']['scale'],
+      );
+      $element['options']['legendmark_scale'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Legend marker scale multiplier'),
+        '#default_value' => $settings['options']['legendmark_scale'],
+      );
+      $element['options']['legendpos'] = array(
+        '#type' => 'select',
+        '#title' => t('Legend position'),
+        '#options' => array(
+          'east' => t('Right side'),
+          'west' => t('Left side'),
+          'north' => t('Above'),
+          'south' => t('Below')
+        ),
+        '#default_value' => $settings['options']['legendpos'],
+      );
+      $element['options']['colors'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Colors'),
+        '#description' => t('Colors to use when plotting the chart, separated by spaces.'),
+        '#default_value' => $settings['options']['colors'],
+      );
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function graphael_chart_multifield_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = multifield_field_formatter_settings_summary($field, $instance, $view_mode);
+  switch ($display['type']) {
+    case 'multifield_graphael_chart':
+      $display = array(
+        '' => t('No'),
+        'hover' => t('On mouseover'),
+        'click' => t('On click'),
+      );
+      $legendpos = array(
+        'east' => t('Right side'),
+        'west' => t('Left side'),
+        'north' => t('Above'),
+        'south' => t('Below')
+      );
+      $summary .= '<br />' . !empty($settings['percentage']) ? t('Percentage: Yes') : t('Percentage: No');
+      $summary .= '<br />' . t('Display descriptions: %display', array('%display' => $display[$settings['descriptions_display']]));
+      $summary .= '<br />' . t('Description selector: %selector', array('%selector' => $settings['descriptions_selector']));
+      break;
+  }
+  return $summary;
+}

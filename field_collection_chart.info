@@ -1,6 +1,0 @@
-name = Field Collection Chart
-description = Output a field collection as a chart
-dependencies[] = field_collection
-dependencies[] = i18n
-package = custom
-core = 7.x
