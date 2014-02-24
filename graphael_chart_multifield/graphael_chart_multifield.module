@@ -27,6 +27,7 @@ function graphael_chart_multifield_field_formatter_info() {
           'radius' => 100,
           'scale' => 1.1,
           'legendmark_scale' => 2,
+          'minPercent' => 0.1,
           'colors' => '',
           'legendpos' => 'east',
         ),
@@ -205,6 +206,11 @@ function graphael_chart_multifield_field_formatter_settings_form($field, $instan
         '#type' => 'textfield',
         '#title' => t('Scale multiplier'),
         '#default_value' => $settings['options']['scale'],
+      );
+      $element['options']['minPercent'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Minimal percentage before collapsing'),
+        '#default_value' => $settings['options']['minPercent'],
       );
       $element['options']['legendmark_scale'] = array(
         '#type' => 'textfield',

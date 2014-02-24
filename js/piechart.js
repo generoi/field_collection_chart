@@ -41,7 +41,7 @@
     var referenceMap = [];
     for(var i = 0, l = this.values.length; i < l; i++) {
       // @TODO for some reason floats are preventing the chart from rendering.
-      this.values[i] = ~this.values[i];
+      this.values[i] = Math.round(this.values[i]);
       // graphael bugs if there's a sector spanning 100%.
       // @see http://goo.gl/pghJCQ
       if (this.values[i] === 100) this.values.push(0.001);
@@ -67,7 +67,6 @@
     }
 
     // Create the piechart
-    console.log(this);
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
     // our custom mixins requires these.
     pie.values = this.values;
