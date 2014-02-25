@@ -1,43 +1,56 @@
 <?php
 
 /**
- * Output a wrapper div for the chart and add the JS settings and libraries 
+ * Output a wrapper div for the chart and add the JS settings and libraries
  * required.
  */
 function theme_graphael_chart_piechart($variables) {
-  $values = &$variables['options']['values'];
+  $options = &$variables['options'];
+  $values = &$options['values'];
+  $legends = &$options['legend'];
+  $descriptions = &$options['descriptions'];
 
   if ($variables['percentage']) {
     $remainder = 100 - array_sum($values);
-    $value_count = count($values);
-    $empty_count = $value_count - count(array_filter($values));
-    if ($empty_count > 0) {
+    // The values dont add up to 100%, distribute it amongst labels without a
+    // value
+    if ($remainder > 0) {
+      $value_count = count($values);
+      $empty_count = $value_count - count(array_filter($values));
       // Distribute the remainder amongst the labels without a value.
-      $remainder_part = $remainder / $empty_count;
-      foreach ($values as $idx => $value) {
-        if (empty($value)) {
-          $values[$idx] = (string) $remainder_part;
+      if ($empty_count > 0) {
+        $remainder_part = $remainder / $empty_count;
+        foreach ($values as $idx => $value) {
+          if (empty($value)) {
+            $values[$idx] = (string) $remainder_part;
+          }
         }
       }
+      // The percentage doesnt add up and there are no empty values, add an
+      // Others segment.
+      else {
+        $values[] = (string) $remainder;
+        $legends[] = t('Others');
+        $descriptions[] = '';
+      }
     }
-
   }
-  if (!empty($variables['options']['colors'])) {
-    $variables['options']['colors'] = explode(' ', $variables['options']['colors']);
+  if (!empty($options['colors'])) {
+    $options['colors'] = explode(' ', $options['colors']);
   }
   if (!empty($variables['append_part_size'])) {
-    foreach ($variables['options']['legend'] as $idx => $legend) {
+    foreach ($legends as $idx => $legend) {
       $value = $values[$idx];
       if ($value <= $variables['minimum_part_size']) {
         continue;
       }
-      $variables['options']['legend'][$idx] .= ' ' . $value . ($variables['percentage'] ? '%' : '');
+      $legends[$idx] .= ' ' . $value . ($variables['percentage'] ? '%' : '');
     }
   }
   drupal_add_library('graphael_chart', 'piechart');
   drupal_add_js(array('graphaelChart' => array(
     'charts' => array(
-      $variables['id'] => $variables['options'] + array('type' => $variables['type']),
+      $variables['id'] => $options + array('type' => $variables['type']),
     ),
   )), 'setting');
 
