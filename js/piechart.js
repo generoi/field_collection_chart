@@ -40,8 +40,7 @@
 
     var referenceMap = [];
     for(var i = 0, l = this.values.length; i < l; i++) {
-      // @TODO for some reason floats are preventing the chart from rendering.
-      this.values[i] = Math.round(this.values[i]);
+      this.values[i] = Math.round(this.values[i] * 100) / 100;
       // graphael bugs if there's a sector spanning 100%.
       // @see http://goo.gl/pghJCQ
       if (this.values[i] === 100) this.values.push(0.001);
