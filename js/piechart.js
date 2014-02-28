@@ -7,7 +7,7 @@
   };
 
   var Piechart = function(el, options) {
-    this.r = window.Raphael(el);
+    this.$el = $('#' + el);
     this.radius = +options.radius;
     this.cx = +options.cx || this.radius;
     this.cy = +options.cy || this.radius;
@@ -20,11 +20,14 @@
       , descriptions_display = options.descriptions_display
       , descriptions_selector = options.descriptions_selector
       // Approximation on when west/east legends do not fit anymore.
-      , maxWidth = this.radius * 7;
+      , maxWidth = this.radius * 7
+      , isSmall = window.matchMedia && window.matchMedia('screen and (max-width: ' + maxWidth + 'px)').matches;
 
-    if (window.matchMedia && window.matchMedia('screen and (max-width: ' + maxWidth + 'px)').matches) {
-      if (options.legendpos === 'east') options.legendpos = 'south';
-      else if (options.legendpos === 'west') options.legendpos = 'north';
+    // On small screens, make the chart half the size.
+    if (isSmall) {
+      this.radius = this.radius / 2;
+      this.cx -= this.radius;
+      this.cy -= this.radius;
     }
     // Only keep piecharts own options.
     delete options.cx;
@@ -41,9 +44,6 @@
     var referenceMap = [];
     for(var i = 0, l = this.values.length; i < l; i++) {
       this.values[i] = Math.round(this.values[i] * 100) / 100;
-      // graphael bugs if there's a sector spanning 100%.
-      // @see http://goo.gl/pghJCQ
-      if (this.values[i] === 100) this.values.push(0.001);
       // Bundle the value and the description together so we dont loose their
       // connection.
       referenceMap.push({
@@ -66,7 +66,14 @@
     }
 
     // Create the piechart
+    var chartHeight = this.cy + this.radius * 2
+      , legendHeight = options.legend.length * 20 // Approximate line-height
+      , height = (options.legendpos === 'east' || options.legendpos === 'west') ?
+        Math.max(chartHeight, legendHeight) : chartHeight + legendHeight;
+
+    this.r = window.Raphael(el, '100%', height + 'px');
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
+
     // our custom mixins requires these.
     pie.values = this.values;
     pie.descriptions = this.descriptions;
