@@ -142,9 +142,11 @@
   }
 
   Piechart.prototype.showDescription = function (ctx, description, selector) {
+    this.$el.trigger('graphael.showDescription', [description]);
     $(selector).html(description);
   };
   Piechart.prototype.hideDescription = function (ctx, selector) {
+    this.$el.trigger('graphael.hideDescription');
     // Keep the last description by default.
   };
 
