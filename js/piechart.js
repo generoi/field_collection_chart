@@ -23,11 +23,13 @@
       , maxWidth = this.radius * 7
       , isSmall = window.matchMedia && window.matchMedia('screen and (max-width: ' + maxWidth + 'px)').matches;
 
-    // On small screens, make the chart half the size.
+    // On small screens, make the chart smaller in the size.
+    // @TODO offer this as options
     if (isSmall) {
-      this.radius = this.radius / 2;
-      this.cx -= this.radius;
-      this.cy -= this.radius;
+      var newRadius = 30;
+      this.cx -= this.radius - newRadius;
+      this.cy -= this.radius - newRadius * 2;
+      this.radius = newRadius;
     }
     // Only keep piecharts own options.
     delete options.cx;
