@@ -25,7 +25,7 @@
 
     // On small screens, make the chart smaller in the size.
     // @TODO offer this as options
-    if (isSmall) {
+    if (isSmall && this.radius > 0) {
       var newRadius = 30;
       this.cx -= this.radius - newRadius;
       this.cy -= this.radius - newRadius * 2;
@@ -68,13 +68,12 @@
     }
 
     // Create the piechart
-    var chartHeight = this.cy + this.radius * 2
-      , legendHeight = options.legend.length * 20 // Approximate line-height
-      , height = (options.legendpos === 'east' || options.legendpos === 'west') ?
-        Math.max(chartHeight, legendHeight) : chartHeight + legendHeight;
-
-    this.r = window.Raphael(el, '100%', height + 'px');
+    this.r = window.Raphael(el, '100%', '100%');
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
+
+    //  @TODO figure out height depending on CSS as well.
+    var canvasHeight = this.r.canvas.getBBox().height + this.cy / 2;
+    this.r.setSize('100%', canvasHeight + 'px');
 
     // our custom mixins requires these.
     pie.values = this.values;
