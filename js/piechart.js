@@ -71,8 +71,7 @@
     this.r = window.Raphael(el, '100%', '100%');
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
 
-    //  @TODO figure out height depending on CSS as well.
-    var canvasHeight = this.r.canvas.getBBox().height + this.cy / 2;
+    var canvasHeight = this.r.canvas.getBBox().height + this.cy + 10;
     this.r.setSize('100%', canvasHeight + 'px');
 
     // our custom mixins requires these.

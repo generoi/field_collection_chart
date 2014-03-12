@@ -259,8 +259,9 @@
                 tr = {
                     east: [0, -bb.height / 2],
                     west: [-bb.width - 2 * r - 20, -bb.height / 2],
-                    north: [-r - bb.width / 2, -r - bb.height - 10],
-                    south: [-r - bb.width / 2, r + 10]
+                    // Hacked source not to center align.
+                    north: [-r, -r - bb.height - 10],
+                    south: [-r, r + 10]
                 }[dir];
 
             chart.labels.translate.apply(chart.labels, tr);
