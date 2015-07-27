@@ -15,6 +15,7 @@
           }
           Drupal.graphaelChart[options.type](chart, options);
         }
+
         if (delayed.length) {
           $(window).one('resize.fndtn.section', function() {
             for (var i = 0, l = delayed.length; i < l; i++) {
@@ -25,6 +26,9 @@
               Drupal.graphaelChart[options.type](chart, options);
             }
           });
+          window.setTimeout(function() {
+            $(window).trigger('resize');
+          }, 500);
         }
       }
     }

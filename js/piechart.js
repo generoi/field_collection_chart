@@ -183,6 +183,7 @@
     var that = this;
     for (var i = 0; i < this.values.length; i++) {
       (function (sector, cover, j) {
+        if (!sector || !sector.middle) return;
         var o = {
           sector: sector,
           cover: cover,
@@ -207,6 +208,7 @@
     var that = this;
     for (var i = 0; i < this.values.length; i++) {
       (function (sector, cover, j) {
+        if (!sector || !sector.middle) return;
         var o = {
           sector: sector,
           cover: cover,
@@ -234,6 +236,7 @@
     var that = this;
     for (var i = 0; i < this.values.length; i++) {
       (function (sector, cover, j) {
+        if (!sector || !sector.middle) return;
         var o = {
           sector: sector,
           cover: cover,
