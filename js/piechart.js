@@ -73,16 +73,20 @@
     this.r = window.Raphael(el, '100%', '100%');
     var pie = this.pie = this.r.piechart(this.cx, this.cy, this.radius, this.values, options);
 
-    var box;
-    try {
-      box = this.r.canvas.getBBox();
-    } catch(err) {
-      box = {
-        height: this.r.canvas.clientHeight
-      };
+    function setCanvasHeight(ctx) {
+      var box;
+      try {
+        box = ctx.r.canvas.getBBox();
+      } catch(err) {
+        box = { height: ctx.r.canvas.clientHeight };
+      }
+      if (!box.height) {
+        return setTimeout(setCanvasHeight, 500, ctx);
+      }
+      var canvasHeight = ((box.height > ctx.cy * 2) ? box.height : ctx.cy * 2) + 10;
+      ctx.r.setSize('100%', canvasHeight + 'px');
     }
-    var canvasHeight = box.height + this.cy + 10;
-    this.r.setSize('100%', canvasHeight + 'px');
+    setCanvasHeight(this);
 
     // our custom mixins requires these.
     pie.values = this.values;
