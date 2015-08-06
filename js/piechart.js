@@ -14,7 +14,9 @@
     this.values = options.values;
     this.descriptions = options.descriptions;
     this.legendmark_default_size = 5;
-    var scale = +options.scale || 1.1
+    this.originalDescription = $(options.descriptions_selector).html();
+    var that = this
+      , scale = +options.scale || 1.1
       , legendmark_scale = +options.legendmark_scale || 1
       , legendmark_hover_size = this.legendmark_default_size * legendmark_scale
       , descriptions_display = options.descriptions_display
@@ -97,13 +99,12 @@
     pie.hover(mouseover, mouseout);
     pie.hoverLabel(mouseover, mouseout);
 
-    var that = this
-      // Functions to toggle descriptions
-      , fin = curryish(this.showDescription, this, [descriptions_selector])
+    // Functions to toggle descriptions
+    var fin = curryish(this.showDescription, this, [descriptions_selector])
       , fout = curryish(this.hideDescription, this, [descriptions_selector]);
 
     // Display the description of the largest value by default.
-    this.showDescription(null, this.descriptions[0], descriptions_selector);
+    //this.showDescription(null, this.descriptions[0], descriptions_selector);
 
     // Display descriptions on either click or hover
     switch (descriptions_display) {
@@ -151,11 +152,11 @@
 
   Piechart.prototype.showDescription = function (ctx, description, selector) {
     this.$el.trigger('graphael.showDescription', [description]);
-    $(selector).html(description);
+    $(selector).html(description ? description : this.originalDescription);
   };
-  Piechart.prototype.hideDescription = function (ctx, selector) {
+  Piechart.prototype.hideDescription = function (ctx, description, selector) {
     this.$el.trigger('graphael.hideDescription');
-    // Keep the last description by default.
+    // Display the previous description by default.
   };
 
   // scale sector and landmark icon on mouseover
