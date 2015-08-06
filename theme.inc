@@ -17,8 +17,23 @@ function theme_graphael_chart_piechart($variables) {
     if ($remainder > 0) {
       $value_count = count($values);
       $empty_count = $value_count - count(array_filter($values));
+
+      // Hide values which are empty.
+      if ($variables['hide_empty_value']) {
+        foreach ($values as $idx => $value) {
+          if (empty($value)) {
+            array_splice($values, $idx, 1);
+            array_splice($descriptions, $idx, 1);
+            array_splice($legends, $idx, 1);
+          }
+        }
+
+        $values[] = (string) $remainder;
+        $legends[] = t('Others');
+        $descriptions[] = '';
+      }
       // Distribute the remainder amongst the labels without a value.
-      if ($empty_count > 0) {
+      else if ($empty_count > 0) {
         $remainder_part = $remainder / $empty_count;
         foreach ($values as $idx => $value) {
           if (empty($value)) {

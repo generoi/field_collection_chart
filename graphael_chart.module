@@ -75,6 +75,7 @@ function graphael_chart_theme($existing, $type, $theme, $path) {
       'variables' => array(
         'id' => NULL,
         'percentage' => TRUE,
+        'hide_empty_value' => FALSE,
         'append_part_size' => FALSE,
         'minimum_part_size' => 0,
         'options' => array(),
