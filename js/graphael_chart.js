@@ -17,15 +17,8 @@
         }
 
         if (delayed.length) {
-          $(window).one('resize.fndtn.section', function() {
-            for (var i = 0, l = delayed.length; i < l; i++) {
-              var chart = delayed[i]
-                , options = settings.charts[chart];
-
-              if (!options.type) continue;
-              Drupal.graphaelChart[options.type](chart, options);
-            }
-          });
+          $(document).on('opened.fndtn.section', Drupal.graphaelChart.reflow);
+          $(window).one('resize.fndtn.section', Drupal.graphaelChart.reflow);
           window.setTimeout(function() {
             $(window).trigger('resize');
           }, 500);
@@ -34,4 +27,16 @@
     }
   };
   Drupal.graphaelChart = Drupal.graphaelChart || {};
+
+  Drupal.graphaelChart.reflow = function () {
+    var settings = Drupal.settings.graphaelChart || {};
+    for (var chart in settings.charts) if (settings.charts.hasOwnProperty(chart)) {
+      var options = settings.charts[chart];
+
+      if (!options.type) continue;
+      if ($('#' + chart).is(':visible')) {
+        Drupal.graphaelChart[options.type](chart, options);
+      }
+    }
+  };
 }(jQuery));
